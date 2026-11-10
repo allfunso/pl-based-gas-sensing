@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import csv
 from scipy.signal import find_peaks as scipy_find_peaks
 from scipy.signal import savgol_filter as scipy_savgol_filter
+from scipy.integrate import trapezoid as integrate_trapezoid
 
 class Collection:
 
@@ -11,38 +12,15 @@ class Collection:
         self.counts = list(spectrum.counts for spectrum in args)
         self.wavelengths = list(spectrum.wavelengths for spectrum in args)
         self.peaks = list(spectrum.peaks for spectrum in args)
-        self.normalized = False
+        self.name = "Collection"
 
     def add(self, spectrum):
         self.spectra.append(spectrum.name)
         self.counts.append(spectrum.counts)
         self.wavelengths.append(spectrum.wavelengths)
         self.peaks.append(spectrum.peaks)
-
-    def normalize(self):
-        for i in range(len(self.spectra)):
-            self.counts[i, :] = self.counts[i, :] * 1 / np.max(self.counts[i, :])
-        self.normalized = True
-
-    def zero_baseline(self):
-        for i in range(len(self.spectra)):
-            self.counts = self.counts - np.min(self.counts)
-
-    def smooth(self, window_length=51, poly_order=2):
-        for i in range(len(self.spectra)):
-            self.counts[i] = scipy_savgol_filter(self.counts[i], window_length, poly_order)
-
-    def lp_filter(self, cutoff_wavelength=500, factor=0.95, offset=0.02):
-        for i in range(len(self.spectra)):
-            transmittance = (self.wavelengths[i] > cutoff_wavelength) * factor + offset
-            self.counts[i] = self.counts[i] * transmittance
     
-    def plot(self):
-        if self.normalized:
-            label_y_spacing = 0.015
-        else:
-            label_y_spacing = 15
-
+    def plot(self, label_y_spacing=20, label_x_spacing=-10):
         fig, ax = plt.subplots(figsize=(10, 6))
 
         for i in range(len(self.spectra)):
@@ -51,13 +29,14 @@ class Collection:
                 ax.scatter(self.peaks[i][:, 0], self.peaks[i][:, 1], label=f"{self.spectra[i]} peaks")
                 for peak in self.peaks[i]:
                     label = str(np.round(peak[0], decimals=1))# + " nm"
-                    offset = np.array([-10, label_y_spacing])
+                    offset = np.array([label_x_spacing, label_y_spacing])
                     ax.annotate(label, xy=peak, xytext=peak+offset)
 
 
         ax.set_xlabel("Wavelength (nm)")
         ax.set_ylabel("Counts")
         ax.legend()
+        ax.set_title(self.name)
 
         ax.grid(True, alpha=0.3)
 
@@ -66,13 +45,13 @@ class Collection:
 
 class Spectrum:
 
-    def __init__(self, wavelengths, counts, metadata={}, name="Spectrum", normalized=False):
+    def __init__(self, wavelengths, counts, metadata={}, name="Spectrum"):
         self.wavelengths = np.array(wavelengths)
         self.counts = np.array(counts)
         self.metadata = metadata
         self.peaks = np.array([])
         self.name = name
-        self.normalized = normalized
+        self.normalized = False
 
     @classmethod
     def from_txt(cls, filename):
@@ -126,7 +105,8 @@ class Spectrum:
                     # Ignore malformed lines
                     continue
 
-        return cls(wavelengths, counts, metadata, filename[:-4])
+        name =  filename.split("\\")[-1][:-4]
+        return cls(wavelengths, counts, metadata, name)
 
     @classmethod
     def from_csv(cls, filename):
@@ -179,7 +159,8 @@ class Spectrum:
                 except (ValueError, IndexError):
                     continue
 
-        return cls(wavelengths, intensities, metadata, filename[:-4])
+        name =  filename.split("\\")[-1][:-4]
+        return cls(wavelengths, intensities, metadata, name)
 
 
     def plot(self):
@@ -216,7 +197,7 @@ class Spectrum:
     def subtract(self, other):
         self.counts = np.subtract(self.counts, other.counts)
 
-    def smooth(self, window_length=51, poly_order=2):
+    def smooth(self, window_length=21, poly_order=3):
         self.counts = scipy_savgol_filter(self.counts, window_length, poly_order)
 
     def find_peaks(self, spacing=100, h=None, w=20):
@@ -233,3 +214,8 @@ class Spectrum:
     def lp_filter(self, cutoff_wavelength=500, factor=0.95, offset=0.02):
         transmittance = (self.wavelengths > cutoff_wavelength) * factor + offset
         self.counts = self.counts * transmittance
+
+    def get_power(self):
+        power = integrate_trapezoid(self.counts, self.wavelengths)
+        return power
+    
