@@ -20,7 +20,7 @@ class Collection:
         self.wavelengths.append(spectrum.wavelengths)
         self.peaks.append(spectrum.peaks)
     
-    def plot(self, label_y_spacing=20, label_x_spacing=-10):
+    def plot(self, label_y_spacing=40, label_x_spacing=10):
         fig, ax = plt.subplots(figsize=(10, 6))
 
         for i in range(len(self.spectra)):

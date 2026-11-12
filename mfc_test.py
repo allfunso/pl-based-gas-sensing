@@ -3,7 +3,7 @@ import time
 import csv
 from datetime import datetime
 
-import mfc
+import mfc # Custom library
 
 # MFC specifications
 MAX_FLOW = 1000       # sccm
@@ -58,20 +58,20 @@ def run_mfc_test():
                 print(f"AO1: {flow1} sccm ({voltage1} V)")
 
                 # Apply the new setpoints
-                set_analog_output(device, "AO0", voltage0)
-                set_analog_output(device, "AO1", voltage1)
+                mfc.set_analog_output(device, "AO0", voltage0)
+                mfc.set_analog_output(device, "AO1", voltage1)
 
                 start_time = time.monotonic()
 
                 while time.monotonic() - start_time < DURATION:
 
                     # Read analog feedback
-                    feedback0 = get_analog_feedback(device, "AO0")
-                    feedback1 = get_analog_feedback(device, "AO1")
+                    feedback0 = mfc.get_analog_feedback(device, "AO0")
+                    feedback1 = mfc.get_analog_feedback(device, "AO1")
 
                     # Convert feedback voltages into flow estimates
-                    measured0 = voltage_to_flow(feedback0, MAX_FLOW)
-                    measured1 = voltage_to_flow(feedback1, MAX_FLOW)
+                    measured0 = mfc.voltage_to_flow(feedback0, MAX_FLOW)
+                    measured1 = mfc.voltage_to_flow(feedback1, MAX_FLOW)
 
                     elapsed = time.monotonic() - start_time
 
@@ -110,8 +110,8 @@ def run_mfc_test():
     finally:
         # Return both command outputs to zero
         try:
-            set_analog_output(device, "AO0", 0)
-            set_analog_output(device, "AO1", 0)
+            mfc.set_analog_output(device, "AO0", 0)
+            mfc.set_analog_output(device, "AO1", 0)
             print("\nBoth analog outputs set to zero.")
         finally:
             device.close()

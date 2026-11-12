@@ -44,14 +44,9 @@ def acquire_spectrum():
     response = s.read(3204)
 
     if len(response) != 3204:
-        raise TimeoutError(
-            f"Incomplete spectrum: received {len(response)} of 3204 bytes"
-        )
+        raise TimeoutError(f"Incomplete spectrum: received {len(response)} of 3204 bytes")
 
-    counts = np.frombuffer(
-        response[2:3202],
-        dtype=np.uint16
-    ).copy()
+    counts = np.frombuffer(response[2:3202], dtype=np.uint16).copy()
 
     timestamp = dt.now().isoformat()
 
@@ -62,11 +57,7 @@ def acquire_spectrum():
         'date and time': timestamp
     }
 
-    return spectroscopy.Spectrum(
-        wavelengths,
-        counts,
-        metadata
-    )
+    return spectroscopy.Spectrum(wavelengths,counts,metadata)
 
 # --------------------------------------------------
 # Save spectrum
