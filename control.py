@@ -99,9 +99,7 @@ try:
         filename = os.path.join(folder, f"spectrum_{measurement_number:02d}_{spectrum.metadata['date and time']}.csv")
         save_spectrum(spectrum.wavelength, spectrum.counts, filename)
 
-        print(
-            f"Measurement {measurement_number} acquired at {spectrum.metadata['date and time']}"
-        )
+        print(f"Measurement {measurement_number} acquired at {spectrum.metadata['date and time']}")
 
         measurement_number += 1
 
