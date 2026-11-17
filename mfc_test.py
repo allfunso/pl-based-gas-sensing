@@ -9,7 +9,25 @@ import mfc # Custom library
 MAX_FLOW = 1000       # sccm
 VREF = 5.0            # V
 DURATION = 120        # seconds per configuration
-SAMPLE_INTERVAL = 10   # seconds
+SAMPLE_INTERVAL = 1   # seconds
+
+
+# To be finished #####
+def purge():
+    mfc.set_analog_output(device, "AO0", 0) #CO2
+    purge_flow = 500
+    # Read analog feedback
+    feedback0 = mfc.get_analog_feedback(device, "AO0")
+    feedback1 = mfc.get_analog_feedback(device, "AO1")
+
+    # Convert feedback voltages into flow estimates
+    measured0 = mfc.voltage_to_flow(feedback0, MAX_FLOW)
+    measured1 = mfc.voltage_to_flow(feedback1, MAX_FLOW)
+    
+    while feedback0 > 1:
+        voltage0 = mfc.flow_to_voltage(flow0, MAX_FLOW, VREF)
+        mfc.set_analog_output(device, "AO0", voltage0)
+#####
 
 
 def run_mfc_test():
@@ -25,8 +43,8 @@ def run_mfc_test():
 
     try:
         # Start with both outputs at zero
-        mfc.set_analog_output(device, "AO0", 0)
-        mfc.set_analog_output(device, "AO1", 0)
+        mfc.set_analog_output(device, "AO0", 0) #CO2
+        mfc.set_analog_output(device, "AO1", 0) #Air (dry), AO3 for humid air
 
         print("\nStarting MFC scaling test.")
         print(f"Maximum flow: {MAX_FLOW} sccm")
